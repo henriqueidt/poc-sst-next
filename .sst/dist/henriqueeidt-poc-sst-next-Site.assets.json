@@ -1,0 +1,62 @@
+{
+  "version": "32.0.0",
+  "files": {
+    "a6939122001b21b616445382fb9d022bb83928f52a9b2b1ace147e1b04f836c2": {
+      "source": {
+        "path": "asset.a6939122001b21b616445382fb9d022bb83928f52a9b2b1ace147e1b04f836c2",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "020765577434-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-020765577434-us-east-1",
+          "objectKey": "a6939122001b21b616445382fb9d022bb83928f52a9b2b1ace147e1b04f836c2.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::020765577434:role/cdk-hnb659fds-file-publishing-role-020765577434-us-east-1"
+        }
+      }
+    },
+    "5fa1330271b8967d9254ba2d4a07144f8acefe8b77e6d6bba38261373a50d5f8": {
+      "source": {
+        "path": "asset.5fa1330271b8967d9254ba2d4a07144f8acefe8b77e6d6bba38261373a50d5f8",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "020765577434-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-020765577434-us-east-1",
+          "objectKey": "5fa1330271b8967d9254ba2d4a07144f8acefe8b77e6d6bba38261373a50d5f8.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::020765577434:role/cdk-hnb659fds-file-publishing-role-020765577434-us-east-1"
+        }
+      }
+    },
+    "55633597fae26b785fe3d2ccce7fef978bee11a968f912f6d83fcadd1ab61fe2": {
+      "source": {
+        "path": "asset.55633597fae26b785fe3d2ccce7fef978bee11a968f912f6d83fcadd1ab61fe2.zip",
+        "packaging": "file"
+      },
+      "destinations": {
+        "020765577434-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-020765577434-us-east-1",
+          "objectKey": "55633597fae26b785fe3d2ccce7fef978bee11a968f912f6d83fcadd1ab61fe2.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::020765577434:role/cdk-hnb659fds-file-publishing-role-020765577434-us-east-1"
+        }
+      }
+    },
+    "486b3d02654b2b29bf6f5e1380c1762f8c7112f3834117364f227c6f72286820": {
+      "source": {
+        "path": "henriqueeidt-poc-sst-next-Site.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "020765577434-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-020765577434-us-east-1",
+          "objectKey": "486b3d02654b2b29bf6f5e1380c1762f8c7112f3834117364f227c6f72286820.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::020765577434:role/cdk-hnb659fds-file-publishing-role-020765577434-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
