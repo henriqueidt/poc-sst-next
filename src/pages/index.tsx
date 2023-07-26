@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ChangeEvent,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { SetStateAction, useEffect, useRef, useState } from "react";
 
 const Terminal = () => {
   const [currentDir, setCurrentDir] = useState("/");
@@ -30,6 +24,12 @@ const Terminal = () => {
     fetchCurrentDir();
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+    });
+  }, [output]);
+
   const handleLs = async () => {
     try {
       const response = await fetch(
@@ -37,7 +37,6 @@ const Terminal = () => {
       );
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setOutput((output) => [...output, ...data.files]);
       } else {
         console.error("Error fetching file system information", response);
@@ -121,6 +120,13 @@ const Terminal = () => {
     const splittedCommand = commandText.trim().split(" ");
     const commandValue = splittedCommand[0];
     const commandArg = splittedCommand[1];
+
+    setOutput((output) => [
+      ...output,
+      "--------------------------------------------------------------------------------",
+      `${currentDir} $ ${commandText}`,
+    ]);
+
     switch (commandValue) {
       case "ls":
         handleLs();
@@ -162,18 +168,18 @@ const Terminal = () => {
 
   return (
     <main>
-      <div className="bg-black h-screen text-white overflow-auto">
+      <div className="bg-black text-white">
         <div>
           <div className="output">
             {output.map((item, index) => (
               <div key={index}>{item}</div>
             ))}
           </div>
-          <form action="/" onSubmit={onSubmit}>
-            <span className="text-white">{currentDir} $ </span>
+          <form action="/" onSubmit={onSubmit} className="flex">
+            <span className="text-white">{currentDir} $</span>
             <input
               type="text"
-              className="bg-black outline-none text-white"
+              className="bg-black outline-none text-white flex-1 ml-1"
               onChange={onInput}
               value={command}
             />
