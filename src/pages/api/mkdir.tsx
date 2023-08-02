@@ -4,18 +4,25 @@ import path from "path";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const { dirname } = req.query;
+    const { dirname, currentDir } = req.query;
 
-    if (!dirname || dirname === undefined) {
+    const body = JSON.parse(req.body);
+
+    const { isDryRun } = body;
+
+    if (!dirname || dirname === undefined || !currentDir) {
       return res.status(400).json({ error: "Directory name is required." });
     }
+    let files;
 
-    const currentDir = process.cwd();
-    const newDirPath = path.join(currentDir, dirname as string);
+    if (!isDryRun) {
+      const newDirPath = path.join(currentDir.toString(), dirname as string);
+      fs.mkdirSync(newDirPath);
+      files = fs.readdirSync(currentDir.toString());
+    } else {
+      files = [...fs.readdirSync(currentDir.toString()), dirname];
+    }
 
-    fs.mkdirSync(newDirPath);
-
-    const files = fs.readdirSync(currentDir);
     res.status(200).json({ files });
   } catch (error) {
     console.error("Error creating directory:", error);

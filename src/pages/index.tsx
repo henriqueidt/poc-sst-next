@@ -6,6 +6,9 @@ const Terminal = () => {
   const [currentDir, setCurrentDir] = useState("/");
   const [command, setCommand] = useState("");
   const [output, setOutput] = useState<string[]>([]);
+  const [isDryRun, setIsDryRun] = useState(false);
+  const [fileStructure, setFileStructure] = useState({});
+  const [dryRunCommands, setDryRunCommands] = useState<string[]>([]);
 
   useEffect(() => {
     async function fetchCurrentDir() {
@@ -30,28 +33,55 @@ const Terminal = () => {
     });
   }, [output]);
 
-  const handleLs = async () => {
+  const handleLs = async (addToOutput = true) => {
+    if (isDryRun && fileStructure[currentDir]) {
+      console.log(fileStructure[currentDir]);
+      setOutput((output) => [...output, ...fileStructure[currentDir]]);
+      return;
+    }
     try {
       const response = await fetch(
         `/api/getFileSystem?currentdir=${encodeURIComponent(currentDir)}`
       );
       if (response.ok) {
         const data = await response.json();
-        setOutput((output) => [...output, ...data.files]);
+        if (addToOutput) {
+          setOutput((output) => [...output, ...data.files]);
+        }
+        return data.files;
       } else {
         console.error("Error fetching file system information", response);
+        return [];
       }
     } catch (error) {
       console.error("Error fetching file system information:", error);
+      return [];
     }
   };
 
   const handleMkdir = async (dirName: string) => {
     try {
       const response = await fetch(
-        `/api/mkdir?dirname=${encodeURIComponent(dirName)}`
+        `/api/mkdir?dirname=${encodeURIComponent(
+          dirName
+        )}&currentDir=${encodeURIComponent(currentDir)}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            isDryRun,
+          }),
+        }
       );
       if (response.ok) {
+        const data = await response.json();
+        console.log(data.files);
+        setFileStructure((files) => ({
+          ...files,
+          [currentDir]: fileStructure[currentDir]
+            ? new Set([...fileStructure[currentDir], ...data.files])
+            : data.files,
+        }));
+
         return;
       } else {
         setOutput((output) => [
@@ -70,9 +100,24 @@ const Terminal = () => {
   const handleTouch = async (fileName: string) => {
     try {
       const response = await fetch(
-        `/api/touch?filename=${encodeURIComponent(fileName)}`
+        `/api/touch?filename=${encodeURIComponent(
+          fileName
+        )}&currentDir=${encodeURIComponent(currentDir)}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            isDryRun,
+          }),
+        }
       );
       if (response.ok) {
+        const data = await response.json();
+        setFileStructure((files) => ({
+          ...files,
+          [currentDir]: fileStructure[currentDir]
+            ? new Set([...fileStructure[currentDir], ...data.files])
+            : data.files,
+        }));
         return;
       } else {
         setOutput((output) => [
@@ -116,6 +161,23 @@ const Terminal = () => {
     }
   };
 
+  const toggleDryRunMode = async () => {
+    if (isDryRun) {
+      setIsDryRun(false);
+      setFileStructure({});
+      setIsDryRun(false);
+      setOutput((output) => [...output, "EXITING DRYRUN"]);
+      return;
+    }
+    setIsDryRun(true);
+    const files = await handleLs(false);
+    setFileStructure((currentfiles) => ({
+      ...currentfiles,
+      [currentDir]: files,
+    }));
+    setOutput((output) => [...output, "ENTERING DRYRUN"]);
+  };
+
   const handleCommand = (commandText: string) => {
     const splittedCommand = commandText.trim().split(" ");
     const commandValue = splittedCommand[0];
@@ -126,6 +188,14 @@ const Terminal = () => {
       "--------------------------------------------------------------------------------",
       `${currentDir} $ ${commandText}`,
     ]);
+
+    if (commandText === "dryrun") {
+      toggleDryRunMode();
+      return;
+    }
+    if (isDryRun) {
+      setDryRunCommands((commands) => [...commands, commandText]);
+    }
 
     switch (commandValue) {
       case "ls":
