@@ -1,30 +1,28 @@
 "use client";
 
+import { Terminal } from "@/classes/Terminal";
+import { CdCommand } from "@/classes/commands/cdCommand";
+import { EchoCommand } from "@/classes/commands/echoCommand";
+import { LsCommand } from "@/classes/commands/lsCommand";
+import { MkdirCommand } from "@/classes/commands/mkdirCommand";
+import { TouchCommand } from "@/classes/commands/touchCommand";
+
 import { SetStateAction, useEffect, useRef, useState } from "react";
 
-const Terminal = () => {
+const terminal1 = new Terminal();
+
+const TerminalApp = () => {
   const [currentDir, setCurrentDir] = useState("/");
   const [command, setCommand] = useState("");
   const [output, setOutput] = useState<string[]>([]);
   const [isDryRun, setIsDryRun] = useState(false);
-  const [fileStructure, setFileStructure] = useState({});
-  const [dryRunCommands, setDryRunCommands] = useState<string[]>([]);
 
   useEffect(() => {
-    async function fetchCurrentDir() {
-      try {
-        const response = await fetch("/api/getCurrentDir");
-        if (response.ok) {
-          const data = await response.json();
-          setCurrentDir(data.currentDir);
-        } else {
-          console.error("Error fetching file system information", response);
-        }
-      } catch (error) {
-        console.error("Error fetching file system information:", error);
-      }
+    async function fetchDir() {
+      await terminal1.fetchCurrentDir();
+      setCurrentDir(terminal1.getCurrentDir());
     }
-    fetchCurrentDir();
+    fetchDir();
   }, []);
 
   useEffect(() => {
@@ -33,169 +31,63 @@ const Terminal = () => {
     });
   }, [output]);
 
-  const handleLs = async (addToOutput = true) => {
-    if (isDryRun && fileStructure[currentDir]) {
-      console.log(fileStructure[currentDir]);
-      setOutput((output) => [...output, ...fileStructure[currentDir]]);
-      return;
-    }
-    try {
-      const response = await fetch(
-        `/api/getFileSystem?currentdir=${encodeURIComponent(currentDir)}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (addToOutput) {
-          setOutput((output) => [...output, ...data.files]);
-        }
-        return data.files;
-      } else {
-        console.error("Error fetching file system information", response);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching file system information:", error);
-      return [];
-    }
+  const handleLs = async () => {
+    const lsCommand = new LsCommand(terminal1.getCurrentFolder());
+    const commandId = terminal1.addCommand(lsCommand);
+    const output = await terminal1.executeCommand(commandId);
+    setOutput(output);
   };
 
   const handleMkdir = async (dirName: string) => {
-    try {
-      const response = await fetch(
-        `/api/mkdir?dirname=${encodeURIComponent(
-          dirName
-        )}&currentDir=${encodeURIComponent(currentDir)}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            isDryRun,
-          }),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log(data.files);
-        setFileStructure((files) => ({
-          ...files,
-          [currentDir]: fileStructure[currentDir]
-            ? new Set([...fileStructure[currentDir], ...data.files])
-            : data.files,
-        }));
+    const mkdirCommand = new MkdirCommand(
+      terminal1.getCurrentFolder(),
+      dirName
+    );
 
-        return;
-      } else {
-        setOutput((output) => [
-          ...output,
-          "usage: mkdir [-pv] [-m mode] directory_name ...",
-        ]);
-      }
-    } catch (error) {
-      setOutput((output) => [
-        ...output,
-        "usage: mkdir [-pv] [-m mode] directory_name ...",
-      ]);
-    }
+    const commandId = terminal1.addCommand(mkdirCommand);
+    const output = await terminal1.executeCommand(commandId);
+    setOutput(output);
   };
 
   const handleTouch = async (fileName: string) => {
-    try {
-      const response = await fetch(
-        `/api/touch?filename=${encodeURIComponent(
-          fileName
-        )}&currentDir=${encodeURIComponent(currentDir)}`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            isDryRun,
-          }),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setFileStructure((files) => ({
-          ...files,
-          [currentDir]: fileStructure[currentDir]
-            ? new Set([...fileStructure[currentDir], ...data.files])
-            : data.files,
-        }));
-        return;
-      } else {
-        setOutput((output) => [
-          ...output,
-          "usage: touch [-A [-][[hh]mm]SS] [-achm] [-r file] [-t [[CC]YY]MMDDhhmm[.SS]] [-d YYYY-MM-DDThh:mm:SS[.frac][tz]] file ...",
-        ]);
-      }
-    } catch (error) {
-      setOutput((output) => [
-        ...output,
-        "usage: touch [-A [-][[hh]mm]SS] [-achm] [-r file] [-t [[CC]YY]MMDDhhmm[.SS]] [-d YYYY-MM-DDThh:mm:SS[.frac][tz]] file ...",
-      ]);
-    }
+    const touchCommand = new TouchCommand(
+      terminal1.getCurrentFolder(),
+      fileName
+    );
+
+    const commandId = terminal1.addCommand(touchCommand);
+    const output = await terminal1.executeCommand(commandId);
+    setOutput(output);
   };
 
-  const handleEcho = (text: string) => {
-    setOutput((output) => [...output, text]);
+  const handleEcho = async (text: string) => {
+    const echoCommand = new EchoCommand(terminal1.getCurrentFolder(), text);
+
+    const commandId = terminal1.addCommand(echoCommand);
+    const output = await terminal1.executeCommand(commandId);
+    setOutput(output);
   };
 
   const handleCD = async (dirname: string) => {
-    try {
-      const response = await fetch(
-        `/api/cd?dirname=${encodeURIComponent(
-          dirname
-        )}&currentdir=${encodeURIComponent(currentDir)}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentDir(data.newDirPath);
-      } else {
-        setOutput((output) => [
-          ...output,
-          `cd: no such file or directory: ${dirname}`,
-        ]);
-      }
-    } catch (error) {
-      setOutput((output) => [
-        ...output,
-        `cd: no such file or directory: ${dirname}`,
-      ]);
-    }
+    const cdCommand = new CdCommand(terminal1.getCurrentFolder(), dirname);
+
+    const commandId = terminal1.addCommand(cdCommand);
+    const output = await terminal1.executeCommand(commandId);
+
+    terminal1.setCurrentDir(cdCommand.getNewPath());
+    setCurrentDir(cdCommand.getNewPath());
+    setOutput(output);
   };
 
-  const toggleDryRunMode = async () => {
-    if (isDryRun) {
-      setIsDryRun(false);
-      setFileStructure({});
-      setIsDryRun(false);
-      setOutput((output) => [...output, "EXITING DRYRUN"]);
-      return;
-    }
-    setIsDryRun(true);
-    const files = await handleLs(false);
-    setFileStructure((currentfiles) => ({
-      ...currentfiles,
-      [currentDir]: files,
-    }));
-    setOutput((output) => [...output, "ENTERING DRYRUN"]);
+  const handleDryRun = async () => {
+    const output = await terminal1.toggleDryRun();
+    setOutput(output);
   };
 
   const handleCommand = (commandText: string) => {
     const splittedCommand = commandText.trim().split(" ");
     const commandValue = splittedCommand[0];
     const commandArg = splittedCommand[1];
-
-    setOutput((output) => [
-      ...output,
-      "--------------------------------------------------------------------------------",
-      `${currentDir} $ ${commandText}`,
-    ]);
-
-    if (commandText === "dryrun") {
-      toggleDryRunMode();
-      return;
-    }
-    if (isDryRun) {
-      setDryRunCommands((commands) => [...commands, commandText]);
-    }
 
     switch (commandValue) {
       case "ls":
@@ -216,6 +108,10 @@ const Terminal = () => {
 
       case "cd":
         handleCD(commandArg);
+        break;
+
+      case "dryrun":
+        handleDryRun();
         break;
 
       default:
@@ -260,4 +156,4 @@ const Terminal = () => {
   );
 };
 
-export default Terminal;
+export default TerminalApp;
