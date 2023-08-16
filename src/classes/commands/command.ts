@@ -1,7 +1,7 @@
 export class Command {
   private output: string[] = [];
 
-  execute(isDryRun: boolean): void {}
+  execute(isDryRun: boolean): any {}
 
   getOutput(): string[] {
     return this.output;

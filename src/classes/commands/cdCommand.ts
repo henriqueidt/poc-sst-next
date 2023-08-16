@@ -16,6 +16,7 @@ export class CdCommand extends Command {
     const newDirPath = await this.folder.cd(this.target);
     this.newPath = newDirPath;
     this.setOutput([`$ ${this.folder.getPath()} cd ${this.target}`]);
+    return newDirPath;
   }
 
   getNewPath() {

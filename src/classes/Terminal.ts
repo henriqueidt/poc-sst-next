@@ -14,14 +14,21 @@ export class Terminal {
   }
 
   async executeCommand(key: string) {
-    await this.commands[key].execute(this.isDryRun);
+    const newFolder = await this.commands[key].execute(this.isDryRun);
 
-    return Object.values(this.commands)
-      .map((command) => [
-        ...command.getOutput(),
-        "--------------------------------------------------------------------------------",
-      ])
-      .flat(1);
+    if (newFolder) {
+      this.setCurrentDir(newFolder);
+    }
+
+    return {
+      output: Object.values(this.commands)
+        .map((command) => [
+          ...command.getOutput(),
+          "--------------------------------------------------------------------------------",
+        ])
+        .flat(1),
+      currentFolder: newFolder,
+    };
   }
 
   setFolder(key: string, folder: Folder): void {
